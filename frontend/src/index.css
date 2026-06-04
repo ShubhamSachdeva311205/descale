@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Anamorpher — forensic-instrument dark theme.
+ * Colors are stored as raw OKLCH channels (L C H) and consumed through Tailwind
+ * as `oklch(var(--token) / <alpha-value>)`, so opacity utilities keep working.
+ */
+@layer base {
+  :root {
+    --bg: 0.145 0 0;
+    --surface: 0.185 0.004 220;
+    --surface-2: 0.225 0.006 220;
+    --border: 0.30 0.006 220;
+    --border-strong: 0.40 0.008 220;
+
+    --ink: 0.96 0 0;
+    --ink-muted: 0.74 0.012 220;
+    --ink-faint: 0.60 0.012 220;
+
+    --primary: 0.70 0.115 185;
+    --primary-ink: 0.16 0.02 200;
+
+    --signal: 0.80 0.15 72;
+    --signal-ink: 0.20 0.03 72;
+
+    --danger: 0.64 0.19 25;
+    --danger-ink: 0.98 0 0;
+
+    --radius: 0.5rem;
+
+    /* shadcn-compatible aliases (so ui/* primitives keep working) */
+    --background: var(--bg);
+    --foreground: var(--ink);
+    --card: var(--surface);
+    --card-foreground: var(--ink);
+    --popover: var(--surface-2);
+    --popover-foreground: var(--ink);
+    --primary-foreground: var(--primary-ink);
+    --secondary: var(--surface-2);
+    --secondary-foreground: var(--ink);
+    --muted: var(--surface-2);
+    --muted-foreground: var(--ink-muted);
+    --accent: var(--surface-2);
+    --accent-foreground: var(--ink);
+    --destructive: var(--danger);
+    --destructive-foreground: var(--danger-ink);
+    --input: var(--border);
+    --ring: var(--primary);
+  }
+}
+
+@layer base {
+  * {
+    border-color: oklch(var(--border));
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: oklch(var(--bg));
+    color: oklch(var(--ink));
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    /* faint instrument grid, barely there */
+    background-image:
+      linear-gradient(oklch(var(--ink) / 0.018) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(var(--ink) / 0.018) 1px, transparent 1px);
+    background-size: 44px 44px;
+    background-position: center top;
+  }
+
+  ::selection {
+    background: oklch(var(--primary) / 0.30);
+  }
+
+  :focus-visible {
+    outline: 2px solid oklch(var(--primary));
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* monospace numerics everywhere they appear */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+  }
+
+  /* thin instrument scrollbars */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: oklch(var(--border-strong));
+    border-radius: 99px;
+    border: 2px solid oklch(var(--bg));
+  }
+  ::-webkit-scrollbar-thumb:hover { background: oklch(var(--ink-faint)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
