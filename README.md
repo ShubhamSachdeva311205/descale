@@ -46,6 +46,13 @@ The solver targets two scaler families, which tells the whole security story:
 So **anti-aliased downscaling is a practical defense**. The cross-library panel
 lets you watch a payload tuned for OpenCV get *resisted* by Pillow.
 
+### Does it fool real models?
+
+`eval/run_eval.py` runs crafted payloads against local vision-language models
+(via Ollama) and measures end-to-end injection success against a baseline. In a
+smoke run, a bilinear→896 payload made **`gemma4:e4b` read the injected text in
+4/4 trials** from the full-resolution decoy. See [`eval/README.md`](eval/README.md).
+
 ---
 
 ## Features
@@ -124,6 +131,11 @@ python -m pytest backend/tests -q
 `scale` (integer downscale factor), and the stealth params.
 
 ---
+
+## Deploying
+
+Frontend → GitHub Pages, backend → a free Hugging Face Docker Space. Steps in
+[`DEPLOY.md`](DEPLOY.md).
 
 ## Ethics
 

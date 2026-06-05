@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -9,14 +11,18 @@ app = FastAPI(
     description="Image-scaling attacks for multi-modal prompt injection (research/education).",
 )
 
-# Allow the Vite dev server (and common local ports) to call the API.
+# Local dev origins, plus any set via DESCALE_ALLOWED_ORIGINS (comma-separated)
+# so the deployed API can accept the GitHub Pages frontend.
+_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:4173",
+]
+_origins += [o.strip() for o in os.getenv("DESCALE_ALLOWED_ORIGINS", "").split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:4173",
-    ],
+    allow_origins=_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

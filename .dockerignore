@@ -1,0 +1,11 @@
+frontend
+node_modules
+**/__pycache__
+**/.venv
+**/venv
+.git
+.github
+docs
+eval/results
+*.log
+.DS_Store
