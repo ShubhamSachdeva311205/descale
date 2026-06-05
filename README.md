@@ -13,6 +13,10 @@ image-scaling attack literature (Xiao et al., USENIX 2019; Quiring et al.),
 rebuilt with a correct closed-form solver, an attack-success checker, and a
 forensic-instrument UI. **For security research and education only.**
 
+📖 **[Read the deep-dive explainer](frontend/public/explainer.html)** — every
+formula and step, from the sampling theorem to the closed-form solver (also
+served live at `/descale/explainer.html`).
+
 ![empty state](docs/screenshot-empty.png)
 
 ---

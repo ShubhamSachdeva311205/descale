@@ -217,10 +217,14 @@ export default function App() {
       </main>
 
       <footer className="mx-auto max-w-6xl px-5 pb-10 pt-2">
-        <p className="border-t border-border pt-4 text-xs text-ink-faint">
-          For security research and education. Reimplements the technique from Trail of Bits'
-          Anamorpher and the image-scaling attack literature (Xiao et al., Quiring et al.). Use only
-          on systems you are authorized to test.
+        <p className="flex flex-wrap items-center gap-x-2 border-t border-border pt-4 text-xs text-ink-faint">
+          <a href="explainer.html" className="text-primary hover:underline">Read the deep dive →</a>
+          <span aria-hidden>·</span>
+          <span>
+            For security research and education. Reimplements the technique from Trail of Bits'
+            Anamorpher and the image-scaling attack literature (Xiao et al., Quiring et al.). Use
+            only on systems you are authorized to test.
+          </span>
         </p>
       </footer>
     </div>
