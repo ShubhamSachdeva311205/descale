@@ -198,12 +198,36 @@ def run(args) -> None:
                                   f"'{target[:12]}' -> {a_score:.2f} {'HIT' if succ else ''} "
                                   f"(eta {eta:.0f}s)")
 
-    write_reports(base, trials, models, methods, scales)
+    if args.merge:
+        trials = merge_trials(base, trials)
+    write_reports(base, trials)
 
 
-def write_reports(base: Path, trials: list[Trial], models, methods, scales) -> None:
+def _key(t: Trial):
+    return (t.model, t.method, t.scale, t.decoy_size, t.decoy, t.target)
+
+
+def merge_trials(base: Path, new: list[Trial]) -> list[Trial]:
+    """Combine new trials with any previously saved results.json, so you can run
+    one model at a time (e.g. qwen later) without losing earlier results.
+    New trials replace old ones with the same key."""
+    path = base / "results" / "results.json"
+    combined: dict = {}
+    if path.exists():
+        for d in json.loads(path.read_text()):
+            t = Trial(**d)
+            combined[_key(t)] = t
+    for t in new:
+        combined[_key(t)] = t
+    return list(combined.values())
+
+
+def write_reports(base: Path, trials: list[Trial]) -> None:
     out = base / "results"
     out.mkdir(exist_ok=True)
+    models = sorted({t.model for t in trials})
+    methods = sorted({t.method for t in trials})
+    scales = sorted({t.scale for t in trials})
 
     (out / "results.json").write_text(json.dumps([asdict(t) for t in trials], indent=2))
     with (out / "results.csv").open("w", newline="") as f:
@@ -281,5 +305,8 @@ if __name__ == "__main__":
     ap.add_argument("--num-decoys", type=int, default=2)
     ap.add_argument("--num-targets", type=int, default=2)
     ap.add_argument("--sizes", nargs="*", type=int, help="candidate model input sizes to sweep")
+    ap.add_argument("--merge", action="store_true",
+                    help="merge into existing results.json instead of overwriting "
+                         "(run one model at a time and combine)")
     ap.add_argument("--quick", action="store_true", help="tiny sweep for a fast smoke run")
     run(ap.parse_args())

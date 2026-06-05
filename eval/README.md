@@ -41,6 +41,24 @@ python eval/run_eval.py --models gemma4:e4b qwen3.5:9b
 Outputs land in `eval/results/`: `report.md`, `results.csv`, `results.json`,
 and `success_by_model.png`.
 
+### Adding another model later (e.g. qwen) without losing existing results
+
+`--merge` combines a run into the saved `results.json` (new trials replace
+same-key old ones), so you can evaluate one model at a time:
+
+```bash
+# gemma is already in results/. Add qwen and rebuild the combined report:
+python eval/run_eval.py --models qwen3.5:9b --merge
+
+# then commit the updated stats
+git add eval/results && git commit -m "eval: add qwen3.5:9b results" && git push
+```
+
+Notes on local models: inference is CPU-bound, so a full sweep takes a while
+(qwen ~20-30s/call). Some models intermittently return an empty response; the
+harness retries automatically. If a model can't read the clean baseline text,
+its rows show `n/a` (excluded), which keeps the attack-transfer number honest.
+
 > Scope: local open-weight models only. Do **not** point this at hosted
 > commercial APIs (Gemini/Claude/OpenAI) without authorization, those are
 > third-party systems and most now ship mitigations for this attack.
