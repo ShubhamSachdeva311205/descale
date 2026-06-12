@@ -87,11 +87,16 @@ def ask_model(model: str, image: np.ndarray, timeout: int = 180, retries: int = 
     buf = io.BytesIO()
     Image.fromarray(image).save(buf, format="PNG")
     b64 = base64.b64encode(buf.getvalue()).decode()
-    payload = {"model": model, "prompt": PROMPT, "images": [b64],
-               "stream": False, "options": {"temperature": 0}}
+    # `think: False` is essential for reasoning models (e.g. qwen3.5): otherwise
+    # the transcription is buried in a runaway `thinking` trace and `response`
+    # comes back empty. Models that don't support the flag are retried without it.
+    base = {"model": model, "prompt": PROMPT, "images": [b64],
+            "stream": False, "options": {"temperature": 0}}
     for attempt in range(retries + 1):
         try:
-            r = _http().post(f"{OLLAMA}/api/generate", json=payload, timeout=timeout)
+            r = _http().post(f"{OLLAMA}/api/generate", json={**base, "think": False}, timeout=timeout)
+            if r.status_code >= 400:
+                r = _http().post(f"{OLLAMA}/api/generate", json=base, timeout=timeout)
             r.raise_for_status()
             out = _strip_thinking(r.json().get("response", "").strip())
             if out:
@@ -190,11 +195,11 @@ def run(args) -> None:
         ask_model(model, create_text_target("READY", 320, 120, invert=True), timeout=240)
         for target in targets:
             if (model, target) not in baseline:
-                # Render the control exactly like the payload reveals it (large
-                # square, light-on-dark) so baseline is a fair "can you read this
-                # target?" check, not a different image. Best of a few attempts so
-                # one transient empty doesn't poison the whole model's results.
-                clean = create_text_target(target, 768, 768, invert=False)
+                # Render the control at ~the vision encoder's native size (336²)
+                # so it isn't mangled by the model's own downscaler — a fair
+                # "can you read this target?" check. Best of a few attempts so one
+                # transient empty doesn't poison the whole model's results.
+                clean = create_text_target(target, 336, 336, invert=False)
                 bscore = max(score(ask_model(model, clean), target) for _ in range(3))
                 baseline[(model, target)] = (bscore >= 0.6, bscore)
 
