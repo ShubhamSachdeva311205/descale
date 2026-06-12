@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Push the Descale backend to a Hugging Face Docker Space.
+# Deploy the backend to a Hugging Face Docker Space.
 #
 # Prereqs (one time):
 #   pip install -U huggingface_hub
-#   huggingface-cli login          # paste a WRITE token from hf.co/settings/tokens
+#   export HF_TOKEN=hf_xxx        # a WRITE token from https://hf.co/settings/tokens
 #
 # Usage:
 #   deploy/deploy_hf.sh [hf_username] [space_name]
@@ -11,29 +11,28 @@ set -euo pipefail
 
 HF_USER="${1:-bhamdoesweirdstuff}"
 SPACE="${2:-descale}"
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-WORK="$(mktemp -d)"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+: "${HF_TOKEN:?set HF_TOKEN to a Hugging Face write token (https://hf.co/settings/tokens)}"
 
-echo "Creating/locating Space ${HF_USER}/${SPACE} ..."
-huggingface-cli repo create "${SPACE}" --type space --space_sdk docker -y >/dev/null 2>&1 || true
+python3 - "$HF_USER" "$SPACE" "$ROOT" <<'PY'
+import os, sys, shutil, tempfile
+from pathlib import Path
+from huggingface_hub import HfApi, create_repo
 
-echo "Cloning Space repo ..."
-git clone "https://huggingface.co/spaces/${HF_USER}/${SPACE}" "${WORK}"
+user, space, root = sys.argv[1], sys.argv[2], Path(sys.argv[3])
+token = os.environ["HF_TOKEN"]
+repo_id = f"{user}/{space}"
 
-# Copy only what the backend needs.
-cp "${REPO_ROOT}/Dockerfile" "${WORK}/Dockerfile"
-cp "${REPO_ROOT}/.dockerignore" "${WORK}/.dockerignore"
-cp "${REPO_ROOT}/deploy/huggingface/README.md" "${WORK}/README.md"
-rm -rf "${WORK}/backend"
-cp -R "${REPO_ROOT}/backend" "${WORK}/backend"
-find "${WORK}/backend" -type d -name '__pycache__' -prune -exec rm -rf {} + 2>/dev/null || true
-rm -rf "${WORK}/backend/.venv" "${WORK}/backend/.tmp_ocr"
-
-cd "${WORK}"
-git add -A
-git -c user.email="shubhamsachdeva245@gmail.com" -c user.name="Shubham Sachdeva" \
-    commit -m "Deploy Descale backend" >/dev/null 2>&1 || { echo "Nothing to deploy."; exit 0; }
-git push
-
-echo "Done. Space: https://huggingface.co/spaces/${HF_USER}/${SPACE}"
-echo "API will be live at: https://${HF_USER}-${SPACE}.hf.space/api/info"
+create_repo(repo_id, repo_type="space", space_sdk="docker", exist_ok=True, token=token)
+tmp = Path(tempfile.mkdtemp())
+shutil.copy(root / "Dockerfile", tmp / "Dockerfile")
+shutil.copy(root / ".dockerignore", tmp / ".dockerignore")
+shutil.copy(root / "deploy/huggingface/README.md", tmp / "README.md")
+shutil.copytree(root / "backend", tmp / "backend",
+                ignore=shutil.ignore_patterns(".venv", "venv", "__pycache__",
+                                              ".pytest_cache", "*.pyc", ".tmp_ocr"))
+HfApi(token=token).upload_folder(folder_path=str(tmp), repo_id=repo_id,
+                                 repo_type="space", commit_message="Deploy backend")
+print(f"Deployed: https://huggingface.co/spaces/{repo_id}")
+print(f"API:      https://{user}-{space}.hf.space/api/info")
+PY

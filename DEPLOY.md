@@ -15,10 +15,10 @@ One time:
 
 ```bash
 pip install -U huggingface_hub
-huggingface-cli login        # paste a WRITE token from https://hf.co/settings/tokens
+export HF_TOKEN=hf_xxx        # a WRITE token from https://hf.co/settings/tokens
 ```
 
-Deploy (creates the Space if missing, pushes the backend + Dockerfile):
+Deploy (creates the Space if missing, uploads the backend + Dockerfile):
 
 ```bash
 deploy/deploy_hf.sh bhamdoesweirdstuff descale
